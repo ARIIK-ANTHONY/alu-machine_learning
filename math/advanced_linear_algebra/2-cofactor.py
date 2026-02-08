@@ -4,6 +4,10 @@
 
 def determinant(matrix):
     """Calculate determinant for internal use."""
+    # Handle empty matrix case
+    if matrix == [[]]:
+        return 1
+
     if len(matrix) == 1:
         return matrix[0][0]
     if len(matrix) == 2:
@@ -54,6 +58,10 @@ def cofactor(matrix):
     if not all(len(row) == n for row in matrix):
         raise ValueError("matrix must be a non-empty square matrix")
 
+    # Special case: 1x1 matrix
+    if n == 1:
+        return [[1]]
+
     # Calculate cofactor matrix
     cofactor_matrix = []
     for i in range(n):
@@ -68,6 +76,11 @@ def cofactor(matrix):
                         if col_idx != j:
                             subrow.append(matrix[row_idx][col_idx])
                     submatrix.append(subrow)
+
+            # Special case: if submatrix is empty (1x1 case handled above)
+            if not submatrix:
+                submatrix = [[]]
+
             # Calculate cofactor: (-1)^(i+j) * determinant(submatrix)
             sign = 1 if (i + j) % 2 == 0 else -1
             cofactor_row.append(sign * determinant(submatrix))
