@@ -7,7 +7,7 @@ def determinant(matrix):
     # Handle empty matrix case
     if matrix == [[]]:
         return 1
-    
+
     if len(matrix) == 1:
         return matrix[0][0]
     if len(matrix) == 2:
@@ -76,11 +76,11 @@ def minor(matrix):
                         if col_idx != j:
                             subrow.append(matrix[row_idx][col_idx])
                     submatrix.append(subrow)
-            
+
             # Special case: if submatrix is empty
             if not submatrix:
                 submatrix = [[]]
-                
+
             # Calculate determinant of submatrix
             minor_row.append(determinant(submatrix))
         minor_matrix.append(minor_row)
