@@ -4,6 +4,10 @@
 
 def determinant(matrix):
     """Calculate determinant for internal use."""
+    # Handle empty matrix case
+    if matrix == [[]]:
+        return 1
+    
     if len(matrix) == 1:
         return matrix[0][0]
     if len(matrix) == 2:
@@ -54,6 +58,10 @@ def minor(matrix):
     if not all(len(row) == n for row in matrix):
         raise ValueError("matrix must be a non-empty square matrix")
 
+    # Special case: 1x1 matrix
+    if n == 1:
+        return [[1]]
+
     # Calculate minor matrix
     minor_matrix = []
     for i in range(n):
@@ -68,6 +76,11 @@ def minor(matrix):
                         if col_idx != j:
                             subrow.append(matrix[row_idx][col_idx])
                     submatrix.append(subrow)
+            
+            # Special case: if submatrix is empty
+            if not submatrix:
+                submatrix = [[]]
+                
             # Calculate determinant of submatrix
             minor_row.append(determinant(submatrix))
         minor_matrix.append(minor_row)
