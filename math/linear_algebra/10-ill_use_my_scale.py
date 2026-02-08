@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 """Module for numpy array shape calculation."""
-import numpy as np
 
 
 def np_shape(matrix):
