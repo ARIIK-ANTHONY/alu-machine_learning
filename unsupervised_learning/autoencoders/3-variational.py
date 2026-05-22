@@ -21,6 +21,7 @@ def autoencoder(input_dims, hidden_layers, latent_dims):
     for nodes in hidden_layers:
         x = keras.layers.Dense(nodes, activation='relu')(x)
 
+    # Two separate Dense layers for mean and log variance
     z_mean = keras.layers.Dense(latent_dims, activation=None)(x)
     z_log_var = keras.layers.Dense(latent_dims, activation=None)(x)
 
@@ -51,8 +52,6 @@ def autoencoder(input_dims, hidden_layers, latent_dims):
 
     def vae_loss(x, x_decoder_mean):
         """VAE loss function combining reconstruction loss and KL divergence"""
-        x = keras.backend.flatten(x)
-        x_decoder_mean = keras.backend.flatten(x_decoder_mean)
         reconstruction_loss = keras.backend.binary_crossentropy(x, x_decoder_mean)
         reconstruction_loss = keras.backend.sum(reconstruction_loss, axis=-1)
         kl_loss = -0.5 * keras.backend.sum(
