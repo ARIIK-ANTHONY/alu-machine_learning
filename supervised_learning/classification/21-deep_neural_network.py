@@ -48,7 +48,6 @@ class DeepNeuralNetwork:
             # Zero initialization
             self.__weights['b' + str(i + 1)] = np.zeros((layers[i], 1))
 
-    # add getter method
     @property
     def L(self):
         """ Return layers in the neural network"""
@@ -71,19 +70,18 @@ class DeepNeuralNetwork:
             X (numpy.array): Input array with
             shape (nx, m) = (featurs, no of examples)
         """
-        self.cache["A0"] = X
-        # print(self.cache)
-        for i in range(1, self.L+1):
+        self.__cache["A0"] = X
+        for i in range(1, self.__L + 1):
             # extract values
-            W = self.weights['W'+str(i)]
-            b = self.weights['b'+str(i)]
-            A = self.cache['A'+str(i - 1)]
+            W = self.__weights['W' + str(i)]
+            b = self.__weights['b' + str(i)]
+            A = self.__cache['A' + str(i - 1)]
             # do forward propagation
             z = np.matmul(W, A) + b
             sigmoid = 1 / (1 + np.exp(-z))  # this is the output
             # store output to the cache
-            self.cache["A"+str(i)] = sigmoid
-        return self.cache["A"+str(i)], self.cache
+            self.__cache["A" + str(i)] = sigmoid
+        return self.__cache["A" + str(self.__L)], self.__cache
 
     def cost(self, Y, A):
         """ Calculate the cost of the Neural Network.
@@ -93,10 +91,11 @@ class DeepNeuralNetwork:
             A (numpy.array): predicted values of the neural network
 
         Returns:
-            _type_: _description_
+            cost: cross-entropy cost
         """
+        m = Y.shape[1]
         loss = -(Y * np.log(A) + (1 - Y) * np.log(1.0000001 - A))
-        cost = np.mean(loss)
+        cost = np.sum(loss) / m
         return cost
 
     def evaluate(self, X, Y):
@@ -109,10 +108,10 @@ class DeepNeuralNetwork:
         Returns:
             prediction, cost: return predictions and costs
         """
-        self.forward_prop(X)
-        # get output of the neural network from the cache
-        output = self.cache.get("A" + str(self.L))
-        return np.where(output >= 0.5, 1, 0), self.cost(Y, output)
+        A, cache = self.forward_prop(X)
+        prediction = np.where(A >= 0.5, 1, 0)
+        cost = self.cost(Y, A)
+        return prediction, cost
 
     def gradient_descent(self, Y, cache, alpha=0.05):
         """ Calculate one pass of gradient descent on the neural network
@@ -124,21 +123,19 @@ class DeepNeuralNetwork:
             alpha (float): learning rate
         """
         m = Y.shape[1]
-        
-        for i in range(self.L, 0, -1):
-
+        # Initialize da for backpropagation
+        da = None
+        # Loop from last layer to first (3rd allowed loop total)
+        for i in range(self.__L, 0, -1):
             A_prev = cache["A" + str(i - 1)]
             A = cache["A" + str(i)]
             W = self.__weights["W" + str(i)]
-
             if i == self.__L:
                 dz = A - Y
             else:
                 dz = da * (A * (1 - A))
-            db = dz.mean(axis=1, keepdims=True)
             dw = np.matmul(dz, A_prev.T) / m
+            db = np.sum(dz, axis=1, keepdims=True) / m
             da = np.matmul(W.T, dz)
-            self.__weights['W' + str(i)] -= (alpha * dw)
-            self.__weights['b' + str(i)] -= (alpha * db)
-            
-    
+            self.__weights['W' + str(i)] -= alpha * dw
+            self.__weights['b' + str(i)] -= alpha * db
