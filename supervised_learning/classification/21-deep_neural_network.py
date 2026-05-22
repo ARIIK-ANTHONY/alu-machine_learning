@@ -37,20 +37,17 @@ class DeepNeuralNetwork:
                 raise TypeError('layers must be a list of positive integers')
 
             if i == 0:
-                # He et al. initialization
                 self.__weights['W' + str(i + 1)] = np.random.randn(
                     layers[i], nx) * np.sqrt(2 / nx)
             else:
-                # He et al. initialization
                 self.__weights['W' + str(i + 1)] = np.random.randn(
                     layers[i], layers[i - 1]) * np.sqrt(2 / layers[i - 1])
 
-            # Zero initialization
             self.__weights['b' + str(i + 1)] = np.zeros((layers[i], 1))
 
     @property
     def L(self):
-        """ Return layers in the neural network"""
+        """ Return number of layers in the neural network"""
         return self.__L
 
     @property
@@ -60,72 +57,69 @@ class DeepNeuralNetwork:
 
     @property
     def weights(self):
-        """Return weights and bias dictionary"""
+        """ Return weights and bias dictionary"""
         return self.__weights
 
     def forward_prop(self, X):
         """ Forward propagation
 
         Args:
-            X (numpy.array): Input array with
-            shape (nx, m) = (featurs, no of examples)
+            X (numpy.array): Input array with shape (nx, m)
+
+        Returns:
+            A (numpy.array): Output of the neural network
+            cache (dict): Dictionary containing all intermediary values
         """
         self.__cache["A0"] = X
         for i in range(1, self.__L + 1):
-            # extract values
             W = self.__weights['W' + str(i)]
             b = self.__weights['b' + str(i)]
-            A = self.__cache['A' + str(i - 1)]
-            # do forward propagation
-            z = np.matmul(W, A) + b
-            sigmoid = 1 / (1 + np.exp(-z))  # this is the output
-            # store output to the cache
-            self.__cache["A" + str(i)] = sigmoid
-        return self.__cache["A" + str(self.__L)], self.__cache
+            A_prev = self.__cache['A' + str(i - 1)]
+            Z = np.matmul(W, A_prev) + b
+            A = 1 / (1 + np.exp(-Z))
+            self.__cache["A" + str(i)] = A
+        return A, self.__cache
 
     def cost(self, Y, A):
-        """ Calculate the cost of the Neural Network.
+        """ Calculate the cost of the Neural Network
 
         Args:
-            Y (numpy.array): Actual values
-            A (numpy.array): predicted values of the neural network
+            Y (numpy.array): Actual values with shape (1, m)
+            A (numpy.array): Predicted values with shape (1, m)
 
         Returns:
-            cost: cross-entropy cost
+            cost (float): Cross-entropy cost
         """
         m = Y.shape[1]
-        loss = -(Y * np.log(A) + (1 - Y) * np.log(1.0000001 - A))
-        cost = np.sum(loss) / m
+        cost = -np.sum(Y * np.log(A) + (1 - Y) * np.log(1.0000001 - A)) / m
         return cost
 
     def evaluate(self, X, Y):
         """ Evaluate the neural network
 
         Args:
-            X (numpy.array): Input array
-            Y (numpy.array): Actual values
+            X (numpy.array): Input array with shape (nx, m)
+            Y (numpy.array): Actual values with shape (1, m)
 
         Returns:
-            prediction, cost: return predictions and costs
+            prediction (numpy.array): Predicted values (1, m)
+            cost (float): Cross-entropy cost
         """
-        A, cache = self.forward_prop(X)
+        A, _ = self.forward_prop(X)
         prediction = np.where(A >= 0.5, 1, 0)
         cost = self.cost(Y, A)
         return prediction, cost
 
     def gradient_descent(self, Y, cache, alpha=0.05):
-        """ Calculate one pass of gradient descent on the neural network
+        """ Calculate one pass of gradient descent
 
         Args:
-            Y (numpy.array): Actual values
-            cache (dict): Dictionary containing all intermediary values of the
-                          network
-            alpha (float): learning rate
+            Y (numpy.array): Actual values with shape (1, m)
+            cache (dict): Dictionary containing all intermediary values
+            alpha (float): Learning rate
         """
         m = Y.shape[1]
-        # Initialize da for backpropagation
         da = None
-        # Loop from last layer to first (3rd allowed loop total)
         for i in range(self.__L, 0, -1):
             A_prev = cache["A" + str(i - 1)]
             A = cache["A" + str(i)]
