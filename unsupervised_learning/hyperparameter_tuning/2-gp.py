@@ -56,7 +56,7 @@ class GaussianProcess:
         """
         A function that updates a Gaussian process
         """
-
-        self.X = np.append(self.X, X_new).reshape(-1, 1)
-        self.Y = np.append(self.Y, Y_new).reshape(-1, 1)
+        # Fix: Properly append new points
+        self.X = np.append(self.X, X_new.reshape(-1, 1), axis=0)
+        self.Y = np.append(self.Y, Y_new.reshape(-1, 1), axis=0)
         self.K = self.kernel(self.X, self.X)
