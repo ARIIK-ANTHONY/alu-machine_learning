@@ -35,12 +35,12 @@ class BayesianOptimization:
         sigma = np.maximum(sigma, 1e-9)
         mu = mu.flatten()
 
-        # Expected Improvement with exploration factor
+        # Expected Improvement
         if self.minimize:
             mu_sample_opt = np.min(self.gp.Y)
         else:
             mu_sample_opt = np.max(self.gp.Y)
-        
+
         with np.errstate(divide='ignore', invalid='ignore'):
             imp = mu_sample_opt - mu - self.xsi
             Z = imp / sigma
@@ -49,34 +49,33 @@ class BayesianOptimization:
             ei[ei < 0] = 0
 
         X_next = self.X_s[np.argmax(ei)].reshape(1, -1)
-        
         return X_next, ei
 
     def optimize(self, iterations=100):
         """ Optimizes the black-box function """
         for i in range(iterations):
             X_next, _ = self.acquisition()
-            
+
             # Check if point already sampled
             already_sampled = False
             for point in self.gp.X:
                 if np.abs(point[0] - X_next[0, 0]) < 1e-8:
                     already_sampled = True
                     break
-            
+
             if already_sampled:
                 break
-            
+
             Y_next = self.f(X_next)
             self.gp.update(X_next, Y_next)
-        
+
         # Find optimal point
         if self.minimize:
             best_idx = np.argmin(self.gp.Y)
         else:
             best_idx = np.argmax(self.gp.Y)
-        
+
         X_opt = self.gp.X[best_idx].flatten()
         Y_opt = self.gp.Y[best_idx].flatten()
-        
+
         return X_opt, Y_opt
