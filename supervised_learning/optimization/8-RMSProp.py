@@ -1,18 +1,21 @@
 #!/usr/bin/env python3
-""" Training with momentum using RMSProp optimization """
+""" RMSProp optimization for neural network training """
 
 import tensorflow as tf
 
 
 def create_RMSProp_op(loss, alpha, beta2, epsilon):
-    """ creates the training operation for a neural network in tensorflow
-        using the RMSProp optimization algorithm
+    """ creates RMSProp optimization operation for a neural network
+
+    RMSProp (Root Mean Square Propagation) is an adaptive learning rate
+    optimization algorithm that maintains a moving average of squared
+    gradients to normalize updates.
 
     Args:
         loss: the loss of the network
         alpha: the learning rate
-        beta2: the RMSProp weight
-        epsilon: a small number to avoid division by zero
+        beta2: the RMSProp weight (decay rate)
+        epsilon: small number to avoid division by zero
 
     Returns:
         the RMSProp optimization operation
