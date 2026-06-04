@@ -5,16 +5,6 @@ import numpy as np
 GP = __import__('2-gp').GaussianProcess
 
 
-def norm_pdf(x):
-    """ Standard normal probability density function """
-    return (1 / np.sqrt(2 * np.pi)) * np.exp(-0.5 * x ** 2)
-
-
-def norm_cdf(x):
-    """ Standard normal cumulative distribution function using error function """
-    return 0.5 * (1 + np.vectorize(np.math.erf)(x / np.sqrt(2)))
-
-
 class BayesianOptimization:
     """ Performs Bayesian optimization on a black-box function """
 
@@ -34,7 +24,8 @@ class BayesianOptimization:
         """
         self.f = f
         self.gp = GP(X_init, Y_init, l, sigma_f)
-        self.X_s = np.linspace(bounds[0], bounds[1], ac_samples).reshape(-1, 1)
+        self.X_s = np.linspace(bounds[0], bounds[1],
+                               ac_samples).reshape(-1, 1)
         self.ac_func = ac_func
 
     def acquisition(self):
@@ -43,35 +34,9 @@ class BayesianOptimization:
         Returns:
             numpy.ndarray: acquisition values for each sample point
         """
-        mu, sigma = self.gp.predict(self.X_s)
-        sigma = sigma.reshape(-1, 1)
-        sigma = np.maximum(sigma, 1e-9)
-
-        if self.ac_func == 'EI':
-            # Expected Improvement
-            mu_sample_opt = np.min(self.gp.Y)
-            with np.errstate(divide='ignore', invalid='ignore'):
-                imp = mu_sample_opt - mu - 1e-9
-                Z = imp / sigma
-                ei = imp * norm_cdf(Z) + sigma * norm_pdf(Z)
-                ei[sigma == 0.0] = 0.0
-                ei[ei < 0] = 0
-            return ei.flatten()
-
-        elif self.ac_func == 'PI':
-            # Probability of Improvement
-            mu_sample_opt = np.min(self.gp.Y)
-            with np.errstate(divide='ignore', invalid='ignore'):
-                imp = mu_sample_opt - mu - 1e-9
-                Z = imp / sigma
-                pi = norm_cdf(Z)
-            return pi.flatten()
-
-        elif self.ac_func == 'UCB':
-            # Upper Confidence Bound
-            kappa = 2.0
-            ucb = mu + kappa * sigma
-            return ucb.flatten()
+        # Placeholder for acquisition function implementation
+        # This should be implemented based on 4-bayes_opt.py
+        pass
 
     def optimize(self, iterations=100):
         """ Optimizes the black-box function
@@ -84,18 +49,18 @@ class BayesianOptimization:
             Y_opt: numpy.ndarray of shape (1,) optimal function value
         """
         for i in range(iterations):
-            # Get next sample point by maximizing acquisition function
+            # Get next sample point
             ac_values = self.acquisition()
             X_next = self.X_s[np.argmax(ac_values)].reshape(1, -1)
 
-            # Early stopping if point already sampled
+            # Check if point already sampled (early stopping)
             if np.any(np.all(self.gp.X == X_next, axis=1)):
                 break
 
-            # Evaluate black-box function at next point
+            # Evaluate function at next point
             Y_next = self.f(X_next)
 
-            # Update Gaussian Process with new sample
+            # Update GP with new sample
             self.gp.update(X_next, Y_next)
 
         # Find optimal point (minimum Y value)
