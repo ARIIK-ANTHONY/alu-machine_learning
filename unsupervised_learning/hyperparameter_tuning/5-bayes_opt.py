@@ -5,6 +5,16 @@ import numpy as np
 GP = __import__('2-gp').GaussianProcess
 
 
+def norm_pdf(x):
+    """ Standard normal probability density function """
+    return (1 / np.sqrt(2 * np.pi)) * np.exp(-0.5 * x ** 2)
+
+
+def norm_cdf(x):
+    """ Standard normal cumulative distribution function using error function """
+    return 0.5 * (1 + np.vectorize(np.math.erf)(x / np.sqrt(2)))
+
+
 class BayesianOptimization:
     """ Performs Bayesian optimization on a black-box function """
 
@@ -24,15 +34,8 @@ class BayesianOptimization:
         """
         self.f = f
         self.gp = GP(X_init, Y_init, l, sigma_f)
-        self.X_init = X_init
-        self.Y_init = Y_init
-        self.bounds = bounds
-        self.ac_samples = ac_samples
-        self.l = l
-        self.sigma_f = sigma_f
-        self.ac_func = ac_func
-        # Create sample points within bounds
         self.X_s = np.linspace(bounds[0], bounds[1], ac_samples).reshape(-1, 1)
+        self.ac_func = ac_func
 
     def acquisition(self):
         """ Calculates the acquisition function values
@@ -40,11 +43,8 @@ class BayesianOptimization:
         Returns:
             numpy.ndarray: acquisition values for each sample point
         """
-        # Predict mean and standard deviation at sample points
         mu, sigma = self.gp.predict(self.X_s)
         sigma = sigma.reshape(-1, 1)
-
-        # Ensure sigma is positive and handle zeros
         sigma = np.maximum(sigma, 1e-9)
 
         if self.ac_func == 'EI':
@@ -53,8 +53,9 @@ class BayesianOptimization:
             with np.errstate(divide='ignore', invalid='ignore'):
                 imp = mu_sample_opt - mu - 1e-9
                 Z = imp / sigma
-                ei = imp * norm.cdf(Z) + sigma * norm.pdf(Z)
+                ei = imp * norm_cdf(Z) + sigma * norm_pdf(Z)
                 ei[sigma == 0.0] = 0.0
+                ei[ei < 0] = 0
             return ei.flatten()
 
         elif self.ac_func == 'PI':
@@ -63,7 +64,7 @@ class BayesianOptimization:
             with np.errstate(divide='ignore', invalid='ignore'):
                 imp = mu_sample_opt - mu - 1e-9
                 Z = imp / sigma
-                pi = norm.cdf(Z)
+                pi = norm_cdf(Z)
             return pi.flatten()
 
         elif self.ac_func == 'UCB':
@@ -83,18 +84,18 @@ class BayesianOptimization:
             Y_opt: numpy.ndarray of shape (1,) optimal function value
         """
         for i in range(iterations):
-            # Get next sample point
+            # Get next sample point by maximizing acquisition function
             ac_values = self.acquisition()
             X_next = self.X_s[np.argmax(ac_values)].reshape(1, -1)
 
-            # Check if point already sampled (early stopping)
+            # Early stopping if point already sampled
             if np.any(np.all(self.gp.X == X_next, axis=1)):
                 break
 
-            # Evaluate function at next point
+            # Evaluate black-box function at next point
             Y_next = self.f(X_next)
 
-            # Update GP with new sample
+            # Update Gaussian Process with new sample
             self.gp.update(X_next, Y_next)
 
         # Find optimal point (minimum Y value)
