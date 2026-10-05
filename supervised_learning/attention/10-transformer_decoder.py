@@ -54,7 +54,7 @@ class Decoder(tf.keras.layers.Layer):
         Returns:
             tensor of shape (batch, target_seq_len, dm)
         """
-        seq_len = tf.shape(x)[1]
+        seq_len = x.shape(x)[1]
 
         x = self.embedding(x)
         x *= tf.math.sqrt(tf.cast(self.dm, tf.float32))
