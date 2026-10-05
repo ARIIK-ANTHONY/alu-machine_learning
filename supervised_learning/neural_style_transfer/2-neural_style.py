@@ -63,8 +63,6 @@ class NST:
         self.alpha = alpha
         self.beta = beta
 
-        self.load_model()
-
     @staticmethod
     def scale_image(image):
         """
@@ -137,3 +135,31 @@ class NST:
 
         model = tf.keras.models.Model(vgg.input, outputs)
         self.model = model
+
+    @staticmethod
+    def gram_matrix(input_layer):
+        '''
+            Update the class NST to be able to calculate gram matrices:
+
+            parameters:
+                input_layer [numpy.ndarray of shape (h, w, c)]:
+                    containing the layer output for which the
+                    gram matrix is calculated
+
+            returns:
+                the gram matrix as a numpy.ndarray of shape
+                (c, c)
+        '''
+        if not (isinstance(input_layer, tf.Tensor) or
+                isinstance(input_layer, tf.Variable)) or len(
+                    input_layer.shape
+                ) != 4:
+            raise TypeError("input_layer must be a tensor of rank 4")
+
+        _, h, w, c = input_layer.shape
+        product = int(h * w)
+        features = tf.reshape(input_layer, (product, c))
+        gram = tf.matmul(features, features, transpose_a=True)
+        gram = tf.expand_dims(gram, axis=0)
+        gram /= tf.cast(product, tf.float32)
+        return (gram)
