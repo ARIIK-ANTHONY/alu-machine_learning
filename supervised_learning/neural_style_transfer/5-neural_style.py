@@ -240,9 +240,8 @@ class NST:
                 "gram_target must be a tensor of shape [1, {}, {}]".format(
                     c, c))
         gram_style = self.gram_matrix(style_output)
-        diff = tf.square(gram_style - gram_target)
-        diff = tf.reduce_sum(diff)
-        diff /= tf.cast(c ** 2, tf.float32)
+        diff = tf.reduce_sum(tf.square(gram_style - gram_target))
+        diff = diff / tf.cast(c ** 2, tf.float32)
         return diff
 
     def style_cost(self, style_outputs):
