@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-# Calculates the total intra-cluster variance of a dataset. #
+"""
+This module contains a function that
+calculates total intra-cluster variance for a dataset
+"""
 
 import numpy as np
 
